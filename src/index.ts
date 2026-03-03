@@ -1,2 +1,2 @@
-export { WindowManager } from './windows';
+export { WindowManager, WindowManagerError, WindowManagerErrorCode } from './windows';
 export { WindowSnap } from './snap';
