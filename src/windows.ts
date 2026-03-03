@@ -3,8 +3,8 @@
  */
 export class WindowManager {
     /** Create a new window */
-    static async create(options?: { url?: string; width?: number; height?: number; left?: number; top?: number; type?: 'normal' | 'popup' | 'panel'; focused?: boolean }): Promise<chrome.windows.Window> {
-        return chrome.windows.create(options);
+    static async create(options: { url?: string; width?: number; height?: number; left?: number; top?: number; type?: 'normal' | 'popup' | 'panel'; focused?: boolean } = {}): Promise<chrome.windows.Window> {
+        return chrome.windows.create(options) as Promise<chrome.windows.Window>;
     }
 
     /** Create a popup window */
