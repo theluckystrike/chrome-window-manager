@@ -1,256 +1,108 @@
 # chrome-window-manager
 
-[![npm version](https://img.shields.io/npm/v/chrome-window-manager)](https://npmjs.com/package/chrome-window-manager)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
-[![Chrome Web Extension](https://img.shields.io/badge/Chrome-Web%20Extension-orange.svg)](https://developer.chrome.com/docs/extensions/)
-[![CI Status](https://github.com/theluckystrike/chrome-window-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/theluckystrike/chrome-window-manager/actions)
-[![Discord](https://img.shields.io/badge/Discord-Zovo-blueviolet.svg?logo=discord)](https://discord.gg/zovo)
-[![Website](https://img.shields.io/badge/Website-zovo.one-blue)](https://zovo.one)
-[![GitHub Stars](https://img.shields.io/github/stars/theluckystrike/chrome-window-manager?style=social)](https://github.com/theluckystrike/chrome-window-manager)
+> Chrome Windows API wrapper -- create, resize, position, snap, and manage window state for MV3 extensions.
 
-> Window creation, manipulation, grouping, and state persistence for Chrome extensions.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-**chrome-window-manager** provides comprehensive window management utilities for Chrome extensions. Create, manipulate, group, and persist window states with a simple, type-safe API.
-
-Part of the [Zovo](https://zovo.one) developer tools family.
-
-<p align="center">
-  <a href="https://zovo.one">
-    <img src="https://img.shields.io/badge/Visit-Zovo-orange?style=for-the-badge" alt="Zovo">
-  </a>
-  <a href="https://chrome.google.com/webstore/search/publishers/zovo">
-    <img src="https://img.shields.io/badge/Chrome_Web_Store-18%2B%20Extensions-green?style=for-the-badge" alt="Chrome Web Store">
-  </a>
-</p>
-
-## Features
-
-- ✅ **Window Listing** - List all windows with filters
-- ✅ **Window Creation** - Create new windows with custom properties
-- ✅ **Window Manipulation** - Resize, move, focus, and update windows
-- ✅ **Window Grouping** - Group windows by type or purpose
-- ✅ **State Persistence** - Save and restore window states
-- ✅ **TypeScript Support** - Full type definitions included
-
-## Installation
+## Install
 
 ```bash
 npm install chrome-window-manager
 ```
 
-Or with yarn:
+## Usage
 
-```bash
-yarn add chrome-window-manager
-```
+```js
+import { WindowManager, WindowSnap } from 'chrome-window-manager';
 
-## Quick Start
+// Create a centered popup window
+const win = await WindowManager.centered('https://example.com', 800, 600);
 
-```typescript
-import { WindowManager } from 'chrome-window-manager';
+// Create a small popup
+const popup = await WindowManager.popup('popup.html', 400, 500);
 
-// List all windows
-const windows = await WindowManager.list();
+// Resize and move an existing window
+await WindowManager.resize(win.id, 1024, 768);
+await WindowManager.move(win.id, 100, 50);
 
-// Create a new window
-const win = await WindowManager.create({
-  url: 'https://example.com',
-  focused: true
-});
+// Window state management
+await WindowManager.maximize(win.id);
+await WindowManager.minimize(win.id);
+await WindowManager.fullscreen(win.id);
+await WindowManager.restore(win.id);
 
-// Get a specific window
-const window = await WindowManager.get(win.id);
+// Snap windows to screen halves or quarters
+await WindowSnap.left(win.id);
+await WindowSnap.right(win.id);
+await WindowSnap.top(win.id);
+await WindowSnap.bottom(win.id);
+await WindowSnap.quarter(win.id, 'tl'); // top-left quarter
 
-// Update window
-await WindowManager.update(win.id, { focused: true });
-```
+// Focus or close
+await WindowManager.focus(win.id);
+await WindowManager.close(win.id);
 
-## Usage Examples
-
-### List Windows
-
-```typescript
-import { WindowManager } from 'chrome-window-manager';
-
-// List all windows
-const allWindows = await WindowManager.list();
-
-// Filter by type
-const normalWindows = await WindowManager.list({ windowTypes: ['normal'] });
-const popups = await WindowManager.list({ windowTypes: ['popup'] });
-
-// Filter by focused state
-const focusedWindows = await WindowManager.list({ focused: true });
-```
-
-### Create Windows
-
-```typescript
-import { WindowManager } from 'chrome-window-manager';
-
-// Create a basic window
-const win = await WindowManager.create({
-  url: 'https://example.com'
-});
-
-// Create with options
-const popup = await WindowManager.create({
-  url: 'popup.html',
-  type: 'popup',
-  width: 400,
-  height: 300,
-  focused: true
-});
-
-// Create in specific position
-const positioned = await WindowManager.create({
-  url: 'panel.html',
-  type: 'panel',
-  left: 100,
-  top: 100,
-  width: 500,
-  height: 400
-});
-```
-
-### Update Windows
-
-```typescript
-import { WindowManager } from 'chrome-window-manager';
-
-// Focus a window
-await WindowManager.update(windowId, { focused: true });
-
-// Resize window
-await WindowManager.update(windowId, {
-  width: 800,
-  height: 600
-});
-
-// Move window
-await WindowManager.update(windowId, {
-  left: 200,
-  top: 150
-});
-
-// Set always on top
-await WindowManager.update(windowId, {
-  alwaysOnTop: true
-});
-```
-
-### Window State Management
-
-```typescript
-import { WindowManager } from 'chrome-window-manager';
-
-// Save window state
-const state = await WindowManager.getState(windowId);
-await WindowManager.saveState('my-saved-window', state);
-
-// Restore window state
-const restored = await WindowManager.restoreState('my-saved-window');
-```
-
-### Window Grouping
-
-```typescript
-import { WindowManager } from 'chrome-window-manager';
-
-// Group windows
-const group = await WindowManager.group([
-  windowId1,
-  windowId2,
-  windowId3
-], 'My Window Group');
-
-// Get windows in group
-const windowsInGroup = await WindowManager.getGroup('My Window Group');
-
-// Ungroup windows
-await WindowManager.ungroup(group.id);
+// List all open windows
+const allWindows = await WindowManager.getAll();
 ```
 
 ## API
 
-| Method | Description |
-|--------|-------------|
-| `list(options?)` | List all windows with optional filters |
-| `get(id)` | Get a specific window by ID |
-| `create(options)` | Create a new window |
-| `update(id, options)` | Update window properties |
-| `remove(id)` | Close a window |
-| `getState(id)` | Get current window state |
-| `saveState(name, state)` | Save window state |
-| `restoreState(name)` | Restore saved window state |
-| `group(windowIds, name)` | Group windows together |
-| `getGroup(name)` | Get windows in a group |
+### `WindowManager`
 
-## Options
+All methods are static and async.
 
-### Create Options
+| Method | Parameters | Return Type | Description |
+|--------|-----------|-------------|-------------|
+| `create` | `options?: { url?, width?, height?, left?, top?, type?, focused? }` | `Promise<chrome.windows.Window>` | Create a new window with optional configuration |
+| `popup` | `url: string, width?: number, height?: number` | `Promise<chrome.windows.Window>` | Create a focused popup window (defaults: 400x600) |
+| `centered` | `url: string, width?: number, height?: number` | `Promise<chrome.windows.Window>` | Create a centered window (defaults: 800x600) |
+| `getCurrent` | none | `Promise<chrome.windows.Window>` | Get the current window |
+| `getAll` | none | `Promise<chrome.windows.Window[]>` | Get all windows with populated tabs |
+| `focus` | `windowId: number` | `Promise<void>` | Bring a window to the foreground |
+| `resize` | `windowId: number, width: number, height: number` | `Promise<void>` | Resize a window |
+| `move` | `windowId: number, left: number, top: number` | `Promise<void>` | Move a window to a screen position |
+| `minimize` | `windowId: number` | `Promise<void>` | Minimize a window |
+| `maximize` | `windowId: number` | `Promise<void>` | Maximize a window |
+| `fullscreen` | `windowId: number` | `Promise<void>` | Set a window to fullscreen |
+| `restore` | `windowId: number` | `Promise<void>` | Restore a window to normal state |
+| `close` | `windowId: number` | `Promise<void>` | Close a window |
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `url` | `string \| string[]` | - | URL(s) to open |
-| `type` | `'normal' \| 'popup' \| 'panel' \| 'devtools'` | `'normal'` | Window type |
-| `focused` | `boolean` | `true` | Focus the window |
-| `left` | `number` | - | Window left position |
-| `top` | `number` | - | Window top position |
-| `width` | `number` | - | Window width |
-| `height` | `number` | - | Window height |
-| `alwaysOnTop` | `boolean` | `false` | Keep window on top |
+### `WindowSnap`
 
-## Contributing
+All methods are static and async. Snap windows to predefined screen positions.
 
-Contributions are welcome! Please follow these steps:
+| Method | Parameters | Return Type | Description |
+|--------|-----------|-------------|-------------|
+| `left` | `windowId: number` | `Promise<void>` | Snap to left half of screen |
+| `right` | `windowId: number` | `Promise<void>` | Snap to right half of screen |
+| `top` | `windowId: number` | `Promise<void>` | Snap to top half of screen |
+| `bottom` | `windowId: number` | `Promise<void>` | Snap to bottom half of screen |
+| `quarter` | `windowId: number, position: 'tl' \| 'tr' \| 'bl' \| 'br'` | `Promise<void>` | Snap to a screen quarter |
 
-1. **Fork** the repository
-2. **Create** a feature branch: `git checkout -b feature/window-feature`
-3. **Make** your changes
-4. **Test** your changes: `npm test`
-5. **Commit** your changes: `git commit -m 'Add new feature'`
-6. **Push** to the branch: `git push origin feature/window-feature`
-7. **Submit** a Pull Request
+### `WindowManagerError`
 
-### Development
+Custom error class thrown by `WindowManager` methods.
 
-```bash
-# Clone the repository
-git clone https://github.com/theluckystrike/chrome-window-manager.git
-cd chrome-window-manager
+| Property | Type | Description |
+|----------|------|-------------|
+| `message` | `string` | Human-readable error message |
+| `code` | `string` | Machine-readable error code from `WindowManagerErrorCode` |
+| `operation` | `string` | The method that threw the error |
+| `originalError` | `Error \| undefined` | The underlying Chrome API error |
 
-# Install dependencies
-npm install
+### `WindowManagerErrorCode`
 
-# Run tests
-npm test
-
-# Build
-npm run build
-```
-
-## See Also
-
-### Related Zovo Repositories
-
-- [chrome-storage-plus](https://github.com/theluckystrike/chrome-storage-plus) - Type-safe storage wrapper
-- [chrome-tabs-api](https://github.com/theluckystrike/chrome-tabs-api) - Tab management utilities
-- [webext-toast-notifications](https://github.com/theluckystrike/webext-toast-notifications) - Toast notification system
-- [chrome-tts-api](https://github.com/theluckystrike/chrome-tts-api) - Text-to-speech API
-
-### Zovo Chrome Extensions
-
-| Extension | Description | Chrome Web Store |
-|-----------|-------------|------------------|
-| [Tab Suspender Pro](https://chrome.google.com/webstore/detail/tab-suspender-pro) | Suspend inactive tabs to save memory | [Install](https://chrome.google.com/webstore/detail/tab-suspender-pro) |
-| [Cookie Manager Pro](https://chrome.google.com/webstore/detail/cookie-manager-pro) | Advanced cookie management | [Install](https://chrome.google.com/webstore/detail/cookie-manager-pro) |
-| [Clipboard History Pro](https://chrome.google.com/webstore/detail/clipboard-history-pro) | Advanced clipboard management | [Install](https://chrome.google.com/webstore/detail/clipboard-history-pro) |
-| [JSON Viewer Pro](https://chrome.google.com/webstore/detail/json-viewer-pro) | Format and explore JSON | [Install](https://chrome.google.com/webstore/detail/json-viewer-pro) |
-
-Visit [zovo.one](https://zovo.one) for more information.
+| Code | Description |
+|------|-------------|
+| `WINDOW_NOT_FOUND` | Window ID does not exist |
+| `WINDOW_CREATE_FAILED` | Failed to create a window |
+| `WINDOW_UPDATE_FAILED` | Failed to update window properties |
+| `WINDOW_REMOVE_FAILED` | Failed to close a window |
+| `INVALID_WINDOW_ID` | Invalid window ID or parameters |
+| `CHROME_API_ERROR` | General Chrome API error |
+| `NO_WINDOW_CONTEXT` | No window context available |
 
 ## License
 
-MIT — [Zovo](https://zovo.one)
+MIT
