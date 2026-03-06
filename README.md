@@ -3,141 +3,175 @@
 [![npm version](https://img.shields.io/npm/v/chrome-window-manager)](https://npmjs.com/package/chrome-window-manager)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
-[![Discord](https://img.shields.io/badge/Discord-Zovo-blueviolet.svg?logo=discord)](https://discord.gg/zovo)
-[![Website](https://img.shields.io/badge/Website-zovo.one-blue)](https://zovo.one)
-[![GitHub Stars](https://img.shields.io/github/stars/theluckystrike/chrome-window-manager?style=social)](https://github.com/theluckystrike/chrome-window-manager)
 
-> Chrome Windows API wrapper -- create, resize, position, snap, and manage window state for MV3 extensions.
+Chrome Windows API wrapper for MV3 extensions. Create, resize, position, snap, and manage window state from a single static class. TypeScript-first with structured error handling.
 
-Part of the [Zovo](https://zovo.one) developer tools family.
+Requires the `windows` permission in your manifest.json.
 
-## Install
+
+INSTALL
 
 ```bash
 npm install chrome-window-manager
 ```
 
-## Usage
 
-```js
+EXPORTS
+
+The package exposes four named exports from the main entry point.
+
+```ts
+import { WindowManager, WindowSnap, WindowManagerError, WindowManagerErrorCode } from 'chrome-window-manager';
+```
+
+- WindowManager provides all window lifecycle and layout operations as static async methods.
+- WindowSnap provides screen-half and quarter snapping.
+- WindowManagerError is the custom error class thrown on failures.
+- WindowManagerErrorCode is an object of string constants for machine-readable error codes.
+
+
+QUICK START
+
+```ts
 import { WindowManager, WindowSnap } from 'chrome-window-manager';
 
-// Create a centered popup window
+// Create a centered window (defaults to 800x600)
 const win = await WindowManager.centered('https://example.com', 800, 600);
 
-// Create a small popup
+// Create a popup (defaults to 400x600)
 const popup = await WindowManager.popup('popup.html', 400, 500);
 
-// Resize and move an existing window
+// Resize and reposition
 await WindowManager.resize(win.id, 1024, 768);
 await WindowManager.move(win.id, 100, 50);
 
-// Window state management
+// Window state
 await WindowManager.maximize(win.id);
 await WindowManager.minimize(win.id);
 await WindowManager.fullscreen(win.id);
 await WindowManager.restore(win.id);
 
-// Snap windows to screen halves or quarters
+// Snap to screen halves
 await WindowSnap.left(win.id);
 await WindowSnap.right(win.id);
 await WindowSnap.top(win.id);
 await WindowSnap.bottom(win.id);
-await WindowSnap.quarter(win.id, 'tl'); // top-left quarter
 
-// Focus or close
+// Snap to a quarter (tl, tr, bl, br)
+await WindowSnap.quarter(win.id, 'tl');
+
+// Focus, close, list
 await WindowManager.focus(win.id);
 await WindowManager.close(win.id);
-
-// List all open windows
-const allWindows = await WindowManager.getAll();
+const all = await WindowManager.getAll();
 ```
 
-## API
 
-### `WindowManager`
+WINDOWMANAGER API
 
-All methods are static and async.
+All methods are static and return promises.
 
-| Method | Parameters | Return Type | Description |
-|--------|-----------|-------------|-------------|
-| `create` | `options?: { url?, width?, height?, left?, top?, type?, focused? }` | `Promise<chrome.windows.Window>` | Create a new window with optional configuration |
-| `popup` | `url: string, width?: number, height?: number` | `Promise<chrome.windows.Window>` | Create a focused popup window (defaults: 400x600) |
-| `centered` | `url: string, width?: number, height?: number` | `Promise<chrome.windows.Window>` | Create a centered window (defaults: 800x600) |
-| `getCurrent` | none | `Promise<chrome.windows.Window>` | Get the current window |
-| `getAll` | none | `Promise<chrome.windows.Window[]>` | Get all windows with populated tabs |
-| `focus` | `windowId: number` | `Promise<void>` | Bring a window to the foreground |
-| `resize` | `windowId: number, width: number, height: number` | `Promise<void>` | Resize a window |
-| `move` | `windowId: number, left: number, top: number` | `Promise<void>` | Move a window to a screen position |
-| `minimize` | `windowId: number` | `Promise<void>` | Minimize a window |
-| `maximize` | `windowId: number` | `Promise<void>` | Maximize a window |
-| `fullscreen` | `windowId: number` | `Promise<void>` | Set a window to fullscreen |
-| `restore` | `windowId: number` | `Promise<void>` | Restore a window to normal state |
-| `close` | `windowId: number` | `Promise<void>` | Close a window |
+WindowManager.create(options?)
+Creates a new window. Options accept url, width, height, left, top, type ("normal", "popup", or "panel"), and focused. Returns the chrome.windows.Window object.
 
-### `WindowSnap`
+WindowManager.popup(url, width?, height?)
+Shortcut for creating a focused popup. Defaults to 400x600.
 
-All methods are static and async. Snap windows to predefined screen positions.
+WindowManager.centered(url, width?, height?)
+Creates a window centered on the screen. Defaults to 800x600. Screen size is estimated from the current window dimensions.
 
-| Method | Parameters | Return Type | Description |
-|--------|-----------|-------------|-------------|
-| `left` | `windowId: number` | `Promise<void>` | Snap to left half of screen |
-| `right` | `windowId: number` | `Promise<void>` | Snap to right half of screen |
-| `top` | `windowId: number` | `Promise<void>` | Snap to top half of screen |
-| `bottom` | `windowId: number` | `Promise<void>` | Snap to bottom half of screen |
-| `quarter` | `windowId: number, position: 'tl' \| 'tr' \| 'bl' \| 'br'` | `Promise<void>` | Snap to a screen quarter |
+WindowManager.getCurrent()
+Returns the current chrome.windows.Window.
 
-### `WindowManagerError`
+WindowManager.getAll()
+Returns all windows with tabs populated.
 
-Custom error class thrown by `WindowManager` methods.
+WindowManager.focus(windowId)
+Brings a window to the foreground.
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `message` | `string` | Human-readable error message |
-| `code` | `string` | Machine-readable error code from `WindowManagerErrorCode` |
-| `operation` | `string` | The method that threw the error |
-| `originalError` | `Error \| undefined` | The underlying Chrome API error |
+WindowManager.resize(windowId, width, height)
+Sets a window to the given pixel dimensions.
 
-### `WindowManagerErrorCode`
+WindowManager.move(windowId, left, top)
+Repositions a window by screen coordinates.
 
-| Code | Description |
-|------|-------------|
-| `WINDOW_NOT_FOUND` | Window ID does not exist |
-| `WINDOW_CREATE_FAILED` | Failed to create a window |
-| `WINDOW_UPDATE_FAILED` | Failed to update window properties |
-| `WINDOW_REMOVE_FAILED` | Failed to close a window |
-| `INVALID_WINDOW_ID` | Invalid window ID or parameters |
-| `CHROME_API_ERROR` | General Chrome API error |
-| `NO_WINDOW_CONTEXT` | No window context available |
+WindowManager.minimize(windowId)
+Minimizes the window.
 
-## License
+WindowManager.maximize(windowId)
+Maximizes the window.
 
-MIT
+WindowManager.fullscreen(windowId)
+Sets the window to fullscreen. Requires the "fullscreen" permission in manifest.json.
 
-## See Also
+WindowManager.restore(windowId)
+Restores a minimized or maximized window to normal state.
 
-### Related Zovo Repositories
+WindowManager.close(windowId)
+Closes and removes the window.
 
-- [chrome-extension-core](https://github.com/theluckystrike/chrome-extension-core) - Essential utilities for Chrome extension development
-- [webext-messenger](https://github.com/theluckystrike/webext-messenger) - Type-safe messaging between extension contexts
-- [chrome-tab-discard](https://github.com/theluckystrike/chrome-tab-discard) - Tab memory management
-- [chrome-extension-starter-mv3](https://github.com/theluckystrike/chrome-extension-starter-mv3) - Production-ready Chrome extension starter
 
-### Zovo Chrome Extensions
+WINDOWSNAP API
 
-- [Zovo Tab Manager](https://chrome.google.com/webstore/detail/zovo-tab-manager) - Manage tabs efficiently
-- [Zovo Focus](https://chrome.google.com/webstore/detail/zovo-focus) - Block distractions
+All methods are static and return promises. Snap targets use a default screen size of 1920x1080.
 
-Visit [zovo.one](https://zovo.one) for more information.
+WindowSnap.left(windowId) - left half of the screen
+WindowSnap.right(windowId) - right half of the screen
+WindowSnap.top(windowId) - top half of the screen
+WindowSnap.bottom(windowId) - bottom half of the screen
+WindowSnap.quarter(windowId, position) - one quarter of the screen, where position is "tl", "tr", "bl", or "br"
 
-Contributions are welcome! Please feel free to submit a Pull Request.
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+ERROR HANDLING
 
----
+All WindowManager methods throw WindowManagerError on failure. Each error carries four properties.
 
-Built by [Zovo](https://zovo.one)
+- message - human-readable description
+- code - one of the WindowManagerErrorCode constants
+- operation - the method name that threw
+- originalError - the underlying Chrome API error, if any
+
+WindowManagerErrorCode values
+
+WINDOW_NOT_FOUND - the window ID does not exist or was already closed
+WINDOW_CREATE_FAILED - window creation failed
+WINDOW_UPDATE_FAILED - failed to update window properties
+WINDOW_REMOVE_FAILED - failed to close a window
+INVALID_WINDOW_ID - the window ID or parameters were invalid
+CHROME_API_ERROR - general Chrome API error
+NO_WINDOW_CONTEXT - no window context available
+
+```ts
+import { WindowManager, WindowManagerError, WindowManagerErrorCode } from 'chrome-window-manager';
+
+try {
+  await WindowManager.focus(9999);
+} catch (err) {
+  if (err instanceof WindowManagerError && err.code === WindowManagerErrorCode.WINDOW_NOT_FOUND) {
+    console.log('That window is gone.');
+  }
+}
+```
+
+
+MANIFEST PERMISSIONS
+
+Your extension needs at minimum the windows permission. Add fullscreen if you plan to use WindowManager.fullscreen().
+
+```json
+{
+  "permissions": ["windows"]
+}
+```
+
+
+LICENSE
+
+MIT. See LICENSE file.
+
+
+ABOUT
+
+Built by theluckystrike. Part of the extension tooling from zovo.one.
+
+https://github.com/theluckystrike/chrome-window-manager
